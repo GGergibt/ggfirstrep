@@ -1072,7 +1072,6 @@ show_menu()
 # usr_y = display_height - usr_height - 100
 # health = 2
 
-def myfunc():
-    return "HELP"
+
 pygame.quit()
 quit()
