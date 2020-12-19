@@ -136,6 +136,7 @@ class Bird:
 
             self.all_bullets.append(new_bullet)
             self.cd_shoot = 200
+
         else:
             self.cd_shoot -= 1
 
@@ -196,9 +197,10 @@ class Bullet:
 
                     return False
             self.x += self.speed_x
+            self.y -= self.speed_y
         else:
             self.x -= self.speed_x
-        self.y -= self.speed_y
+            self.y += self.speed_y
         if self.x <= display_width and self.y >= 0 and not reverse:    # and self.y >= self.dest_y:
 
             display.blit(bullet_img, (self.x, self.y))
@@ -289,28 +291,42 @@ class Button:
             )
         print_text(message=message, x=x + 10, y=y + 10, font_size=font_size)
 
-usr_width = 60
-usr_height = 100
-usr_x = display_width // 3
-usr_y = display_height - usr_height - 100
+
+class Dinosaur:
+    def __init__(self):
+
+        self.x = display_width // 3
+        self.y = display_height - usr_height - 100
+        self.width = 60
+        self.height = 100
+        make_jump = False
+        health = 2
+        jump_counter = 30
+        img_counter = 0
+        emeralds = 2
+        cooldown = 0
+
+
+
+
+
 
 cactus_width = 20
 cactus_height = 70
 cactus_x = display_width - 50
 cactus_y = display_height - cactus_height - 100
-make_jump = False
-jump_counter = 30
-img_counter = 0
+
+
 scores = 0
 health_img = pygame.image.load("heart.png")
-health = 2
-emeralds = 2
+
+
 # above_cactus = False
 max_scores = 0
 max_above = 0
 x = 20
 health_img = pygame.transform.scale(health_img, (30, 30))
-cooldown = 0
+
 emerald_img = pygame.image.load("Emerald.png")
 emerald_img = pygame.transform.scale(emerald_img, (30, 30))
 start_button = Button(288, 70)
@@ -330,6 +346,10 @@ def jump():
     else:
         jump_counter = 30
         make_jump = False
+
+
+
+
 
 def create_cactus_arr(array):
     choice = random.randrange(0, 3)
@@ -414,6 +434,8 @@ def check_collision(barriers):
                                 return False
                             else:
                                 return True
+
+
 
 def game_over():
     global scores, max_scores, health, cooldown, emeralds
@@ -552,6 +574,7 @@ def draw_dino():
         img_counter = 0
     xxx = dino_img[img_counter // 5]
     display.blit(xxx, (usr_x, usr_y))
+
     img_counter += 1
 
 def draw_dino2():
@@ -638,6 +661,12 @@ def show_health():
         display.blit(health_img, (x, 20))
         x += 40
         show += 1
+
+
+
+
+def check_damage_user():
+
 
 def show_health2():
     global emeralds
@@ -726,6 +755,7 @@ def game_cycle():
     all_btn_bullets = []
     all_ms_bullets = []
 
+
     while game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -797,6 +827,8 @@ def game_cycle():
             if not bullet.move_to(bird1):
                 all_ms_bullets.remove(bullet)
                 # bird1.hide()
+
+
 
         # for bullet in all_ms_bullets:
         #     if not bullet.move_to(bird2):
