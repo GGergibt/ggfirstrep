@@ -128,14 +128,15 @@ class Bird:
         if self.x <= bullet.x <= self.x + self.width:
             if self.y <= bullet.y <= self.y + self.height:
                 self.go_away = True
-    def shoot(self):
+    def shoot(self, dino):
         if not self.cd_shoot:
             pygame.mixer.Sound.play(bullet_sound)
             new_bullet = Bullet(self.x, self.y)
-            new_bullet.find_path(usr_x + usr_width // 2, usr_y + usr_height // 2)
+            new_bullet.find_path(dino.x + dino.width // 2, dino.y + dino.height // 2)
 
             self.all_bullets.append(new_bullet)
             self.cd_shoot = 200
+            dino.check_dmg(new_bullet)
 
         else:
             self.cd_shoot -= 1
@@ -292,19 +293,165 @@ class Button:
         print_text(message=message, x=x + 10, y=y + 10, font_size=font_size)
 
 
+make_jump = False
+health = 2
+jump_counter = 30
+img_counter = 0
+emeralds = 2
+cooldown = 0
+
+
 class Dinosaur:
     def __init__(self):
 
-        self.x = display_width // 3
-        self.y = display_height - usr_height - 100
         self.width = 60
         self.height = 100
-        make_jump = False
-        health = 2
-        jump_counter = 30
-        img_counter = 0
-        emeralds = 2
-        cooldown = 0
+        self.x = display_width // 3
+        self.y = display_height - self.height - 100
+
+
+
+    def jump(self):
+        global  jump_counter, make_jump
+        if jump_counter >= -30:
+
+            # pygame.mixer.Sound.play(jump_sound)
+            if jump_counter == -30:
+                pygame.mixer.Sound.play(fall_sound)
+
+            self.y -= jump_counter / 2
+            jump_counter -= 1
+        else:
+            jump_counter = 30
+            make_jump = False
+
+    def hearts_plus(self, heart):
+        global health
+        if self.x <= heart.x <= self.x + self.width:
+
+            if self.y <= heart.y <= self.y + self.height and health < 5:
+
+                pygame.mixer.Sound.play(heart_plus_sound)
+
+                if health < 5:
+                    health += 1
+
+                    radius = display_width + random.randrange(500, 1700)
+                    homework = heart.y + random.randrange(10, 15)
+                    print(homework)
+
+                    heart.return_self(radius, homework, heart.width, heart.image)
+                    heart.y = 280
+
+    def hearts_plus2(self, energy):
+        global  emeralds
+        if self.x <= energy.x <= self.x + self.width:
+
+            if self.y <= energy.y <= self.y + self.height and emeralds < 10:
+                if emeralds < 10:
+                    emeralds += 1
+
+                    pygame.mixer.Sound.play(heart_plus_sound)
+                    radius = display_width + random.randrange(500, 1700)
+                    homework = energy.y + random.randrange(10, 15)
+
+                    energy.return_self(radius, homework, energy.width, emerald_img)
+                    energy.y = 280
+
+    def check_collision(self, barriers):
+        for barrier in barriers:
+            if barrier.y == 449:  # little cactus
+                if not make_jump:
+                    if barrier.x <= self.x + self.width - 35 <= barrier.x + barrier.width:
+                        if check_health():
+                            object_return(barriers, barrier)
+                            return False
+                        else:
+                            return True
+                elif jump_counter >= 0:
+                    if self.y + self.height - 5 >= barrier.y:
+                        if barrier.x <= self.x + self.width - 35 <= barrier.x + barrier.width:
+                            if check_health():
+
+                                object_return(barriers, barrier)
+                                return False
+                            else:
+                                return True
+                else:
+                    if self.y + self.height - 10 >= barrier.y:
+                        if barrier.x <= self.x <= barrier.x + barrier.width:
+                            if check_health():
+
+                                object_return(barriers, barrier)
+                                return False
+                            else:
+                                return True
+
+            else:
+                if not make_jump:
+                    if barrier.x <= self.x + self.width - 5 <= barrier.x + barrier.width:
+                        if check_health():
+                            object_return(barriers, barrier)
+
+                            return False
+                        else:
+                            return True
+                elif jump_counter >= -1:
+                    if self.y + self.height - 5 >= barrier.y:
+                        if barrier.x <= self.x + self.width - 35 <= barrier.x + barrier.width:
+                            if check_health():
+                                object_return(barriers, barrier)
+                                return False
+                            else:
+                                return True
+                    else:
+                        if self.y + self.height - 10 >= barrier.y:
+                            if barrier.x <= self.x + 5 <= barrier.x + barrier.width:
+                                if check_health():
+                                    object_return(barriers, barrier)
+                                    return False
+                                else:
+                                    return True
+
+    def draw_dino2(self):
+        global img_counter
+
+        if img_counter == 25:
+            img_counter = 0
+
+        display.blit(dino_img2[img_counter // 5], (self.x, self.y))
+        img_counter += 1
+
+    def count_scores(self , barriers):
+        global scores, max_above
+        above_cactus = 0
+
+        if -20 <= jump_counter < 25:
+            for barrier in barriers:
+                if self.y + self.height - 5 <= barrier.y:
+                    if barrier.x <= self.x <= barrier.x + barrier.width:
+                        above_cactus += 1
+                        max_above = max(max_above, above_cactus)
+        else:
+            if jump_counter == -30:
+                scores += max_above
+                max_above = 0
+
+    def draw_dino(self):
+        global img_counter
+
+        if img_counter == 25:
+            img_counter = 0
+        xxx = dino_img[img_counter // 5]
+        display.blit(xxx, (self.x, self.y))
+
+        img_counter += 1
+
+    def check_dmg(self, bullet):
+
+        if self.x <= bullet.x <= self.x + self.width:
+            if self.y <= bullet.y <= self.y + self.height:
+                health -= 1
 
 
 
@@ -333,19 +480,7 @@ start_button = Button(288, 70)
 quit_button = Button(120, 70)
 start_button2 = Button(288, 70)
 
-def jump():
-    global usr_y, jump_counter, make_jump
-    if jump_counter >= -30:
 
-        # pygame.mixer.Sound.play(jump_sound)
-        if jump_counter == -30:
-            pygame.mixer.Sound.play(fall_sound)
-
-        usr_y -= jump_counter / 2
-        jump_counter -= 1
-    else:
-        jump_counter = 30
-        make_jump = False
 
 
 
@@ -380,60 +515,7 @@ def create_cactus_arr(array):
 #             object_return(cactus_options, barrier)
 #             return True
 
-def check_collision(barriers):
-    for barrier in barriers:
-        if barrier.y == 449:  # little cactus
-            if not make_jump:
-                if barrier.x <= usr_x + usr_width - 35 <= barrier.x + barrier.width:
-                    if check_health():
-                        object_return(barriers, barrier)
-                        return False
-                    else:
-                        return True
-            elif jump_counter >= 0:
-                if usr_y + usr_height - 5 >= barrier.y:
-                    if barrier.x <= usr_x + usr_width - 35 <= barrier.x + barrier.width:
-                        if check_health():
 
-                            object_return(barriers, barrier)
-                            return False
-                        else:
-                            return True
-            else:
-                if usr_y + usr_height - 10 >= barrier.y:
-                    if barrier.x <= usr_x <= barrier.x + barrier.width:
-                        if check_health():
-
-                            object_return(barriers, barrier)
-                            return False
-                        else:
-                            return True
-
-        else:
-            if not make_jump:
-                if barrier.x <= usr_x + usr_width - 5 <= barrier.x + barrier.width:
-                    if check_health():
-                        object_return(barriers, barrier)
-
-                        return False
-                    else:
-                        return True
-            elif jump_counter >= -1:
-                if usr_y + usr_height - 5 >= barrier.y:
-                    if barrier.x <= usr_x + usr_width - 35 <= barrier.x + barrier.width:
-                        if check_health():
-                            object_return(barriers, barrier)
-                            return False
-                        else:
-                            return True
-                else:
-                    if usr_y + usr_height - 10 >= barrier.y:
-                        if barrier.x <= usr_x + 5 <= barrier.x + barrier.width:
-                            if check_health():
-                                object_return(barriers, barrier)
-                                return False
-                            else:
-                                return True
 
 
 
@@ -482,7 +564,7 @@ def check_birds_damage(bullets, birds):
 
 
 
-def draw_birds(birds):
+def draw_birds(birds, dino):
     for bird in birds:
         action = bird.draw()
         if action == 1:
@@ -490,7 +572,7 @@ def draw_birds(birds):
         elif action == 2:
             bird.hide()
         else:
-            bird.shoot()
+            bird.shoot(dino)
 
 
 
@@ -567,33 +649,18 @@ def new_start():
 def new_start1():
     game_cycle()
 
-def draw_dino():
-    global img_counter
 
-    if img_counter == 25:
-        img_counter = 0
-    xxx = dino_img[img_counter // 5]
-    display.blit(xxx, (usr_x, usr_y))
 
-    img_counter += 1
 
-def draw_dino2():
-    global img_counter
-
-    if img_counter == 25:
-        img_counter = 0
-
-    display.blit(dino_img2[img_counter // 5], (usr_x, usr_y))
-    img_counter += 1
 
 def start_game():
-    global scores, make_jump, jump_counter, usr_y, health, land
+    global scores, make_jump, jump_counter, usr_y, health, land, dino
 
     while game_cycle():
         scores = 0
         make_jump = False
         jump_counter = 30
-        usr_y = display_height - usr_height - 100
+        dino.y = display_height - dino.height - 100
         health = 2
         display.blit(land, (0, 0))
         clock.tick(60)
@@ -621,20 +688,7 @@ def pause():
         clock.tick(15)
         pygame.mixer.music.unpause()
 
-def count_scores(barriers):
-    global scores, max_above
-    above_cactus = 0
 
-    if -20 <= jump_counter < 25:
-        for barrier in barriers:
-            if usr_y + usr_height - 5 <= barrier.y:
-                if barrier.x <= usr_x <= barrier.x + barrier.width:
-                    above_cactus += 1
-                    max_above = max(max_above, above_cactus)
-    else:
-        if jump_counter == -30:
-            scores += max_above
-            max_above = 0
 
 def move_objects(stone, cloud):
     check = stone.move()
@@ -665,7 +719,7 @@ def show_health():
 
 
 
-def check_damage_user():
+
 
 
 def show_health2():
@@ -697,44 +751,12 @@ def object_return(objects, obj):
 
     obj.return_self(radius, height, width, img)
 
-def hearts_plus(heart):
-    global health, usr_x, usr_y, usr_width, usr_height
-    if usr_x <= heart.x <= usr_x + usr_width:
 
-        if usr_y <= heart.y <= usr_y + usr_height and health < 5:
-
-            pygame.mixer.Sound.play(heart_plus_sound)
-
-            if health < 5:
-                health += 1
-
-                radius = display_width + random.randrange(500, 1700)
-                homework = heart.y + random.randrange(10, 15)
-                print(homework)
-
-                heart.return_self(radius, homework, heart.width, heart.image)
-                heart.y = 280
-
-def hearts_plus2(energy):
-    global health, usr_x, usr_y, usr_width, usr_height, emeralds
-    if usr_x <= energy.x <= usr_x + usr_width:
-
-        if usr_y <= energy.y <= usr_y + usr_height and emeralds < 10:
-            if emeralds < 10:
-                emeralds += 1
-
-                pygame.mixer.Sound.play(heart_plus_sound)
-                radius = display_width + random.randrange(500, 1700)
-                homework = energy.y + random.randrange(10, 15)
-
-
-                energy.return_self(radius, homework, energy.width, emerald_img)
-                energy.y = 280
 
 
 def game_cycle():
     """ Запуск игры"""
-    global make_jump, stone, cloud, usr_x, usr_y, usr_width, cooldown, emeralds
+    global make_jump, stone, cloud,  cooldown, emeralds
     pygame.mixer.music.load("background.ogg")
     pygame.mixer.music.set_volume(0.5)
 
@@ -749,6 +771,7 @@ def game_cycle():
     energy = Object(display_width, 280, 50, emerald_img, 4)
     bird1 = Bird(-80)
     bird2 = Bird(-120)
+    dino = Dinosaur()
 
     all_birds = (bird1,)
 
@@ -768,27 +791,28 @@ def game_cycle():
         if keys[pygame.K_SPACE]:
             make_jump = True
         if make_jump:
-            jump()
+            dino.jump()
 
         display.blit(land, (0, 0))  # рисуем экран
         draw_array(cactus_arr)
         move_objects(stone, cloud)
         print_text("Scores: " + str(scores), 600, 10)
-        count_scores(cactus_arr)
+        dino.count_scores(cactus_arr)
         if keys[pygame.K_ESCAPE]:
             pause()
         heart.move()
-        hearts_plus(heart)
-        hearts_plus2(energy)
+        dino.hearts_plus(heart)
+        dino.hearts_plus2(energy)
         energy.move()
         bird2.draw()
 
-        if check_collision(cactus_arr):
+        if dino.check_collision(cactus_arr):
             game = False
         show_health()
         show_health2()
-        draw_birds(all_birds)
+        draw_birds(all_birds, dino)
         check_birds_damage(all_ms_bullets, all_birds)
+
 
         if emeralds > 0:
 
@@ -803,12 +827,12 @@ def game_cycle():
 
                 if click[0]:
                     pygame.mixer.Sound.play(bullet_sound)
-                    add_bullet = Bullet(usr_x + usr_width, usr_y + 20)
+                    add_bullet = Bullet(dino.x + dino.width, dino.y + 20)
                     add_bullet.find_path(mouse[0], mouse[1])
 
                     all_ms_bullets.append(add_bullet)
                     cooldown = 50
-                    emeralds -= 1
+                    emeralds -=  1
 
 
 
@@ -850,7 +874,7 @@ def game_cycle():
         #
         #             all_ms_bullets.remove(bullet)
 
-        draw_dino()
+        dino.draw_dino()
 
         pygame.display.update()
 
